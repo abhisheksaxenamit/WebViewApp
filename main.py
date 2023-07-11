@@ -17,34 +17,32 @@ class WebViewApp(QMainWindow):
         self.current_url = ""
         self.setWindowTitle("WebView App")
 
-        ### Get the different sheets of the excel ###
+        # Get the different sheets of the excel #
         self.sheets = self.get_sheets_from_excel()
         print(f'{self.sheets}')
 
-        ### Temp Sheet 1 ###
+        # Temp Sheet 1 #
         self.sheet_val = "BANKS"
 
-        ### Set the Web View Engine sheet ###
+        # Set the Web View Engine sheet #
         self.set_webview()
 
-        ### Setup the button_widget ###
+        # Setup the button_widget #
         self.buttons_widget = QWidget()
         self.buttons_widget.setMaximumSize(280, 16777215)
         self.buttons_layout = QVBoxLayout(self.buttons_widget)
         self.buttons_layout.setContentsMargins(10, 10, 10, 10)
         self.buttons_widget.setStyleSheet("background-color: black;")
 
-        ### Set Dropdown Menu for different Sheets ###
+        # Set Dropdown Menu for different Sheets #
         self.sheet_dropdown = QComboBox(self)
         self.sheet_dropdown.setMaximumSize(260, 240)
         self.create_dropdown_menu()
 
-        ### Adding Buttons to the widget ###
-        ### Get the excel sheet data:
-        self.excel_data = self.read_excel_file(self.sheet_val)
+        # Adding Buttons to the widget #
         self.set_buttons_widget()
 
-        ### Make the final APP ###
+        # Make the final APP #
         self.set_action_bar()
         self.create_app()
 
@@ -62,8 +60,12 @@ class WebViewApp(QMainWindow):
         # self.webview.customContextMenuRequested.connect(self.show_context_menu)
 
     def set_buttons_widget(self):
-        button_list = self.excel_data[self.sheet_val].tolist()
-        link_list = self.excel_data["LINK"].tolist()
+        # Get the excel sheet data
+        excel_data = self.read_excel_file(self.sheet_val)
+        excel_data = excel_data.sort_values(self.sheet_val)
+        button_list = excel_data[self.sheet_val].tolist()
+        link_list = excel_data["LINK"].tolist()
+        print(f'{button_list}')
 
         for idx, button_name in enumerate(button_list):
             for link in link_list[idx].splitlines():
@@ -132,6 +134,15 @@ class WebViewApp(QMainWindow):
     def handle_dropdown_selection(self, selected_value):
         print(f'Calling handle_dropdown_selection with value {selected_value}')
         self.sheet_val = selected_value
+        # Clear the buttons layout
+        self.buttons_layout = self.buttons_widget.layout()
+        print(f"Buttons in the widget: {self.buttons_layout.count()}")
+        while self.buttons_layout.count():
+            item = self.buttons_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self.set_buttons_widget()
+        self.buttons_widget.update()
 
 
 if __name__ == '__main__':
