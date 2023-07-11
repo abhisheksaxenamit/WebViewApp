@@ -16,19 +16,29 @@ class WebViewApp(QMainWindow):
         self.webview = QWebEngineView()
         self.current_url = ""
         self.setWindowTitle("WebView App")
+
         ### Get the different sheets of the excel ###
-        sheets = self.get_sheets_from_excel()
-        print(f'{sheets}')
+        self.sheets = self.get_sheets_from_excel()
+        print(f'{self.sheets}')
+
         ### Temp Sheet 1 ###
         self.sheet_val = "BANKS"
+
         ### Set the Web View Engine sheet ###
         self.set_webview()
+
         ### Setup the button_widget ###
         self.buttons_widget = QWidget()
         self.buttons_widget.setMaximumSize(280, 16777215)
         self.buttons_layout = QVBoxLayout(self.buttons_widget)
         self.buttons_layout.setContentsMargins(10, 10, 10, 10)
         self.buttons_widget.setStyleSheet("background-color: black;")
+
+        ### Set Dropdown Menu for different Sheets ###
+        self.sheet_dropdown = QComboBox(self)
+        self.sheet_dropdown.setMaximumSize(260, 240)
+        self.create_dropdown_menu()
+
         ### Adding Buttons to the widget ###
         ### Get the excel sheet data:
         self.excel_data = self.read_excel_file(self.sheet_val)
@@ -62,7 +72,6 @@ class WebViewApp(QMainWindow):
                 button.setFixedSize(240, 50)
                 button.clicked.connect(lambda *args, url=link: self.open_web_gui(url))
                 self.buttons_layout.addWidget(button)
-
 
     def create_app(self):
         splitter = QSplitter()
@@ -101,7 +110,7 @@ class WebViewApp(QMainWindow):
         self.scroll_area.setFixedWidth(280)
 
         self.action_bar = QVBoxLayout()
-        # self.action_bar.addWidget(self.sheet_dropdown)
+        self.action_bar.addWidget(self.sheet_dropdown)
         self.action_bar.addWidget(self.scroll_area)
 
         self.action_bar_widget = QWidget()
@@ -112,6 +121,17 @@ class WebViewApp(QMainWindow):
         print(f'Sheet: {self.file_name}')
         dataframe = pd.read_excel(self.file_name, sheet_name=sheet)
         return dataframe
+
+    def create_dropdown_menu(self):
+        self.sheet_dropdown.addItems(self.sheets)
+        self.sheet_dropdown.setStyleSheet("background-color: black; color: white;")
+        self.sheet_val = self.sheet_dropdown.currentText()
+        self.sheet_dropdown.currentText()
+        self.sheet_dropdown.currentTextChanged.connect(self.handle_dropdown_selection)
+
+    def handle_dropdown_selection(self, selected_value):
+        print(f'Calling handle_dropdown_selection with value {selected_value}')
+        self.sheet_val = selected_value
 
 
 if __name__ == '__main__':
