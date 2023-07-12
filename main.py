@@ -12,6 +12,7 @@ class WebViewApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.cheat_sheet = {}
         self.file_name = str(Path.home()) + "/Advertising.xlsx"
         self.webview = QWebEngineView()
         self.current_url = ""
@@ -20,6 +21,9 @@ class WebViewApp(QMainWindow):
         # Get the different sheets of the excel #
         self.sheets = self.get_sheets_from_excel()
         print(f'{self.sheets}')
+
+        # Gather Data from the excel to the dict
+        self.excel_data_to_dict()
 
         # Temp Sheet 1 #
         self.sheet_val = "BANKS"
@@ -38,6 +42,8 @@ class WebViewApp(QMainWindow):
         self.sheet_dropdown = QComboBox(self)
         self.sheet_dropdown.setMaximumSize(260, 240)
         self.create_dropdown_menu()
+
+        # Set Search tab #
 
         # Adding Buttons to the widget #
         self.set_buttons_widget()
@@ -123,6 +129,23 @@ class WebViewApp(QMainWindow):
         print(f'Sheet: {self.file_name}')
         dataframe = pd.read_excel(self.file_name, sheet_name=sheet)
         return dataframe
+    
+    def excel_data_to_dict(self):
+        for page in self.sheets:
+            excel_data = pd.read_excel(self.file_name, sheet_name=page)
+            for idx, row in excel_data.iterrows():
+                key = row[page]
+                if key in self.cheat_sheet:
+                    # Handle duplicate keys
+                    count = 1
+                    new_key = f"{key}_{count}"
+                    while new_key in self.cheat_sheet:
+                        count += 1
+                        new_key = f"{key}_{count}"
+                    key = new_key
+                self.cheat_sheet[key] = row['LINK']
+        # print(f'{self.cheat_sheet}')
+        print(f'Total links: {len(self.cheat_sheet)}')
 
     def create_dropdown_menu(self):
         self.sheet_dropdown.addItems(self.sheets)
