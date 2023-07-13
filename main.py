@@ -5,13 +5,14 @@ import pandas as pd
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QMainWindow, QApplication, QSizePolicy, QSplitter, QWidget, QVBoxLayout, QComboBox, \
-    QPushButton, QScrollArea
+    QPushButton, QScrollArea, QLineEdit
 
 
 class WebViewApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.action_bar_widget = None
         self.cheat_sheet = {}
         self.file_name = str(Path.home()) + "/Advertising.xlsx"
         self.webview = QWebEngineView()
@@ -31,7 +32,7 @@ class WebViewApp(QMainWindow):
         # Set the Web View Engine sheet #
         self.set_webview()
 
-        # Setup the button_widget #
+        # Set up the button_widget #
         self.buttons_widget = QWidget()
         self.buttons_widget.setMaximumSize(280, 16777215)
         self.buttons_layout = QVBoxLayout(self.buttons_widget)
@@ -44,6 +45,10 @@ class WebViewApp(QMainWindow):
         self.create_dropdown_menu()
 
         # Set Search tab #
+        self.search_bar = QLineEdit()
+        self.search_bar.returnPressed.connect(self.search)
+        self.search_bar_layout = QVBoxLayout()
+        self.search_bar_layout.addWidget(self.search_bar)
 
         # Adding Buttons to the widget #
         self.set_buttons_widget()
@@ -51,6 +56,9 @@ class WebViewApp(QMainWindow):
         # Make the final APP #
         self.set_action_bar()
         self.create_app()
+
+    def search(self):
+        pass
 
     def set_webview(self):
         self.webview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -64,6 +72,22 @@ class WebViewApp(QMainWindow):
             "center; background-size: cover; }</style></head><body></body></html>")
         self.webview.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.webview.customContextMenuRequested.connect(self.show_context_menu)
+
+    def clear_button_widget(self):
+        self.buttons_layout = self.buttons_widget.layout()
+        print(f"Buttons in the widget: {self.buttons_layout.count()}")
+        while self.buttons_layout.count():
+            item = self.buttons_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+    def handle_dropdown_selection(self, selected_value):
+        print(f'Calling handle_dropdown_selection with value {selected_value}')
+        self.sheet_val = selected_value
+        # Clear the buttons layout
+        self.clear_button_widget()
+        self.set_buttons_widget()
+        self.buttons_widget.update()
 
     def set_buttons_widget(self):
         # Get the excel sheet data
@@ -80,13 +104,6 @@ class WebViewApp(QMainWindow):
                 button.setFixedSize(240, 50)
                 button.clicked.connect(lambda *args, url=link: self.open_web_gui(url))
                 self.buttons_layout.addWidget(button)
-
-    def create_app(self):
-        splitter = QSplitter()
-        splitter.addWidget(self.webview)
-        splitter.addWidget(self.action_bar_widget)
-        self.setCentralWidget(splitter)
-        self.showMaximized()
 
     def get_sheets_from_excel(self):
         try:
@@ -112,24 +129,25 @@ class WebViewApp(QMainWindow):
             print(e)
 
     def set_action_bar(self):
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setWidget(self.buttons_widget)
-        self.scroll_area.setFixedWidth(280)
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.buttons_widget)
+        scroll_area.setFixedWidth(280)
 
-        self.action_bar = QVBoxLayout()
-        self.action_bar.addWidget(self.sheet_dropdown)
-        self.action_bar.addWidget(self.scroll_area)
+        action_bar = QVBoxLayout()
+        action_bar.addWidget(self.search_bar)
+        action_bar.addWidget(self.sheet_dropdown)
+        action_bar.addWidget(scroll_area)
 
         self.action_bar_widget = QWidget()
         self.action_bar_widget.setFixedWidth(290)
-        self.action_bar_widget.setLayout(self.action_bar)
+        self.action_bar_widget.setLayout(action_bar)
 
     def read_excel_file(self, sheet):
         print(f'Sheet: {self.file_name}')
         dataframe = pd.read_excel(self.file_name, sheet_name=sheet)
         return dataframe
-    
+
     def excel_data_to_dict(self):
         for page in self.sheets:
             excel_data = pd.read_excel(self.file_name, sheet_name=page)
@@ -154,18 +172,12 @@ class WebViewApp(QMainWindow):
         self.sheet_dropdown.currentText()
         self.sheet_dropdown.currentTextChanged.connect(self.handle_dropdown_selection)
 
-    def handle_dropdown_selection(self, selected_value):
-        print(f'Calling handle_dropdown_selection with value {selected_value}')
-        self.sheet_val = selected_value
-        # Clear the buttons layout
-        self.buttons_layout = self.buttons_widget.layout()
-        print(f"Buttons in the widget: {self.buttons_layout.count()}")
-        while self.buttons_layout.count():
-            item = self.buttons_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        self.set_buttons_widget()
-        self.buttons_widget.update()
+    def create_app(self):
+        splitter = QSplitter()
+        splitter.addWidget(self.webview)
+        splitter.addWidget(self.action_bar_widget)
+        self.setCentralWidget(splitter)
+        self.showMaximized()
 
 
 if __name__ == '__main__':
