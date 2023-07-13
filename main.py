@@ -14,6 +14,7 @@ class WebViewApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.sheet_val = None
         self.copy_link = None
         self.searching = False
         self.action_bar_widget = None
@@ -23,12 +24,9 @@ class WebViewApp(QMainWindow):
         self.current_url = ""
         self.setWindowTitle("WebView App")
 
-        # Get the different sheets of the excel #
+        # Get the different sheets of the Excel #
         self.sheets = self.get_sheets_from_excel()
         print(f'{self.sheets}')
-
-        # Temp Sheet 1 #
-        # self.sheet_val = "BANKS"
 
         # Set the Web View Engine sheet #
         self.set_webview()
@@ -40,7 +38,7 @@ class WebViewApp(QMainWindow):
         self.buttons_layout.setContentsMargins(10, 10, 10, 10)
         self.buttons_widget.setStyleSheet("background-color: black;")
 
-        # Gather Data from the excel to the dict
+        # Gather Data from the Excel to the dict
         self.excel_data_to_dict()
         # Set Search tab #
         self.search_bar = QLineEdit()
@@ -121,7 +119,7 @@ class WebViewApp(QMainWindow):
         self.buttons_widget.update()
 
     def set_buttons_widget(self):
-        # Get the excel sheet data
+        # Get the Excel sheet data
         excel_data = self.read_excel_file(self.sheet_val)
         excel_data = excel_data.sort_values(self.sheet_val)
         button_list = excel_data[self.sheet_val].tolist()
@@ -139,11 +137,11 @@ class WebViewApp(QMainWindow):
     def get_sheets_from_excel(self):
         try:
             return pd.read_excel(self.file_name, sheet_name=None).keys()
-        except KeyError as e:
+        except KeyError:
             print("Expected column headers not found")
             sys.exit(1)
         except TypeError as e:
-            print("Type Error")
+            print(f"Type Error {e}")
             sys.exit(1)
         except FileNotFoundError as e:
             print("Excel file not found " + str(e))
