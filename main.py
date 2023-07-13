@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QMainWindow, QApplication, QSizePolicy, QSplitter, QWidget, QVBoxLayout, QComboBox, \
     QPushButton, QScrollArea, QLineEdit, QMenu
@@ -42,7 +42,12 @@ class WebViewApp(QMainWindow):
         self.excel_data_to_dict()
         # Set Search tab #
         self.search_bar = QLineEdit()
+        self.search_bar.setClearButtonEnabled(True)
         self.search_bar.returnPressed.connect(self.search)
+
+        search_icon = QIcon.fromTheme("edit-find")
+        search_action = self.search_bar.addAction(search_icon, QLineEdit.LeadingPosition)
+        search_action.triggered.connect(self.search)
         self.search_bar_layout = QVBoxLayout()
         self.search_bar_layout.addWidget(self.search_bar)
 
