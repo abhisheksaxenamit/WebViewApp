@@ -12,6 +12,7 @@ class WebViewApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.searching = False
         self.action_bar_widget = None
         self.cheat_sheet = {}
         self.file_name = str(Path.home()) + "/Advertising.xlsx"
@@ -23,11 +24,8 @@ class WebViewApp(QMainWindow):
         self.sheets = self.get_sheets_from_excel()
         print(f'{self.sheets}')
 
-        # Gather Data from the excel to the dict
-        self.excel_data_to_dict()
-
         # Temp Sheet 1 #
-        self.sheet_val = "BANKS"
+        # self.sheet_val = "BANKS"
 
         # Set the Web View Engine sheet #
         self.set_webview()
@@ -39,18 +37,21 @@ class WebViewApp(QMainWindow):
         self.buttons_layout.setContentsMargins(10, 10, 10, 10)
         self.buttons_widget.setStyleSheet("background-color: black;")
 
-        # Set Dropdown Menu for different Sheets #
-        self.sheet_dropdown = QComboBox(self)
-        self.sheet_dropdown.setMaximumSize(260, 240)
-        self.create_dropdown_menu()
-
+        # Gather Data from the excel to the dict
+        self.excel_data_to_dict()
         # Set Search tab #
         self.search_bar = QLineEdit()
         self.search_bar.returnPressed.connect(self.search)
         self.search_bar_layout = QVBoxLayout()
         self.search_bar_layout.addWidget(self.search_bar)
 
+        # Set Dropdown Menu for different Sheets #
+        self.sheet_dropdown = QComboBox(self)
+        self.sheet_dropdown.setMaximumSize(260, 240)
+        self.create_dropdown_menu()
+
         # Adding Buttons to the widget #
+        print(f"searching {self.searching} Calling main -> set_buttons_widget")
         self.set_buttons_widget()
 
         # Make the final APP #
@@ -58,7 +59,23 @@ class WebViewApp(QMainWindow):
         self.create_app()
 
     def search(self):
-        pass
+        search_text = self.search_bar.text()
+        print(f"searching {self.searching} : {search_text.strip()} search()")
+        if search_text.strip() != "":
+            # print(f"searching {self.searching} search()")
+            self.searching = True
+        else:
+            # print(f"searching {self.searching} search()")
+            self.searching = False
+        matches = []
+        for key in self.cheat_sheet.keys():
+            if search_text.lower() in key.lower():
+                # print(f"{key}")
+                matches.append((key, self.cheat_sheet[key]))
+        self.create_buttons_from_search(matches)
+
+        # Clear the search bar after the search
+        self.search_bar.clear()
 
     def set_webview(self):
         self.webview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -72,6 +89,17 @@ class WebViewApp(QMainWindow):
             "center; background-size: cover; }</style></head><body></body></html>")
         self.webview.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.webview.customContextMenuRequested.connect(self.show_context_menu)
+
+    def create_buttons_from_search(self, matches):
+        self.clear_button_widget()
+        for match in matches:
+            for link in match[1].splitlines():
+                button = QPushButton(match[0])
+                button.setStyleSheet("background-color: white; color: black; font: Bold")
+                button.setFixedSize(240, 50)
+                button.clicked.connect(lambda *args, url=link: self.open_web_gui(url))
+                self.buttons_layout.addWidget(button)
+        self.set_buttons_widget()
 
     def clear_button_widget(self):
         self.buttons_layout = self.buttons_widget.layout()
@@ -128,23 +156,8 @@ class WebViewApp(QMainWindow):
         except Exception as e:
             print(e)
 
-    def set_action_bar(self):
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setWidget(self.buttons_widget)
-        scroll_area.setFixedWidth(280)
-
-        action_bar = QVBoxLayout()
-        action_bar.addWidget(self.search_bar)
-        action_bar.addWidget(self.sheet_dropdown)
-        action_bar.addWidget(scroll_area)
-
-        self.action_bar_widget = QWidget()
-        self.action_bar_widget.setFixedWidth(290)
-        self.action_bar_widget.setLayout(action_bar)
-
     def read_excel_file(self, sheet):
-        print(f'Sheet: {self.file_name}')
+        # print(f'Sheet: {self.file_name}')
         dataframe = pd.read_excel(self.file_name, sheet_name=sheet)
         return dataframe
 
@@ -170,7 +183,23 @@ class WebViewApp(QMainWindow):
         self.sheet_dropdown.setStyleSheet("background-color: black; color: white;")
         self.sheet_val = self.sheet_dropdown.currentText()
         self.sheet_dropdown.currentText()
+        print(f"searching {self.searching} create_dropdown_menu -> handle_dropdown_selection")
         self.sheet_dropdown.currentTextChanged.connect(self.handle_dropdown_selection)
+
+    def set_action_bar(self):
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.buttons_widget)
+        scroll_area.setFixedWidth(280)
+
+        action_bar = QVBoxLayout()
+        action_bar.addWidget(self.search_bar)
+        action_bar.addWidget(self.sheet_dropdown)
+        action_bar.addWidget(scroll_area)
+
+        self.action_bar_widget = QWidget()
+        self.action_bar_widget.setFixedWidth(290)
+        self.action_bar_widget.setLayout(action_bar)
 
     def create_app(self):
         splitter = QSplitter()
