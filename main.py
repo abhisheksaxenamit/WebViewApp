@@ -1,17 +1,20 @@
 import sys
+import webbrowser
 from pathlib import Path
 
 import pandas as pd
 from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QAction
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import QMainWindow, QApplication, QSizePolicy, QSplitter, QWidget, QVBoxLayout, QComboBox, \
-    QPushButton, QScrollArea, QLineEdit
+    QPushButton, QScrollArea, QLineEdit, QMenu
 
 
 class WebViewApp(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.copy_link = None
         self.searching = False
         self.action_bar_widget = None
         self.cheat_sheet = {}
@@ -88,7 +91,7 @@ class WebViewApp(QMainWindow):
             "/romain_trystram_wallpaper_wetransfer_dribbble.jpg'); background-repeat: no-repeat; background-position: "
             "center; background-size: cover; }</style></head><body></body></html>")
         self.webview.setContextMenuPolicy(Qt.CustomContextMenu)
-        # self.webview.customContextMenuRequested.connect(self.show_context_menu)
+        self.webview.customContextMenuRequested.connect(self.show_context_menu)
 
     def create_buttons_from_search(self, matches):
         self.clear_button_widget()
@@ -185,6 +188,25 @@ class WebViewApp(QMainWindow):
         self.sheet_dropdown.currentText()
         print(f"searching {self.searching} create_dropdown_menu -> handle_dropdown_selection")
         self.sheet_dropdown.currentTextChanged.connect(self.handle_dropdown_selection)
+
+    def show_context_menu(self, point):
+        context_menu = QMenu(self)
+        # Copy Link #
+        copy_link_action = QAction("Copy Link", self)
+        copy_link_action.triggered.connect(self.copy_link)
+        context_menu.addAction(copy_link_action)
+
+        # Open Web Browser #
+        open_in_browser = QAction("Open in Web Browser", self)
+        open_in_browser.triggered.connect(self.open_in_web_browser)
+        context_menu.addAction(open_in_browser)
+
+        context_menu.exec_(self.mapToGlobal(point))
+
+    def open_in_web_browser(self):
+        print(f"open_in_web_browser {self.current_url}")
+        if self.current_url is not None:
+            webbrowser.open(self.current_url)
 
     def set_action_bar(self):
         scroll_area = QScrollArea()
